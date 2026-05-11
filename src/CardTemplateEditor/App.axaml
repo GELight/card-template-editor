@@ -1,0 +1,174 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="CardTemplateEditor.App"
+             xmlns:local="using:CardTemplateEditor"
+             RequestedThemeVariant="Dark">
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <!-- Dracula-inspirierte Palette: dunkler Blau-Violett-Hintergrund mit
+             Pastell-Lila als Akzent (an Screenshot-Vorlage angelehnt).
+             App läuft immer im Dark-Modus, Resources global gesetzt.
+             Hex-Werte:
+              #282A36 — Window-Background (Dracula BG)
+              #21222C — Surface 1 (Panels, etwas dunkler)
+              #383A4A — Surface 2 (Hover / leichte Erhöhung)
+              #44475A — Surface 3 (Pressed / Selected / Card)
+              #6272A4 — Border / muted (Comment)
+              #BD93F9 — Accent (Pastell-Lila)
+              #D6B6FF — Accent Hover
+              #9D7BD8 — Accent Pressed
+              #FF79C6 — Sekundär-Akzent (Pink, sparsam einsetzen)
+              #F8F8F2 — Foreground / Text (Cream)
+              #C5C9DC — Foreground Secondary
+              #6272A4 — Foreground Disabled / Muted
+              #FF5555 — Error / Destructive
+        -->
+        <ResourceDictionary>
+            <!-- Akzentfarbe: prominent in Buttons, Selektion, Focus-Ringen.
+                 SystemAccentColor ist die Basis, aus der Fluent dynamische
+                 Light/Dark-Variationen ableitet. -->
+            <Color x:Key="SystemAccentColor">#FFBD93F9</Color>
+            <Color x:Key="SystemAccentColorDark1">#FF9D7BD8</Color>
+            <Color x:Key="SystemAccentColorDark2">#FF8265B8</Color>
+            <Color x:Key="SystemAccentColorDark3">#FF684F94</Color>
+            <Color x:Key="SystemAccentColorLight1">#FFD6B6FF</Color>
+            <Color x:Key="SystemAccentColorLight2">#FFE2C9FF</Color>
+            <Color x:Key="SystemAccentColorLight3">#FFEEDDFF</Color>
+
+            <SolidColorBrush x:Key="SystemAccentColorBrush" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="SystemAccentColorDark1Brush" Color="#FF9D7BD8" />
+            <SolidColorBrush x:Key="SystemAccentColorLight1Brush" Color="#FFD6B6FF" />
+
+            <!-- Window/Region-Background: Hauptfläche der App. -->
+            <Color x:Key="SystemRegionColor">#FF282A36</Color>
+            <SolidColorBrush x:Key="SystemRegionBrush" Color="#FF282A36" />
+
+            <!-- Chrome-Backgrounds: für Panels, Toolbars, ListBox-Items.
+                 ChromeMedium = etwas dunklere Surface, ChromeMediumLow = noch dunkler. -->
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush" Color="#FF21222C" />
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumLowBrush" Color="#FF1B1C24" />
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeHighBrush" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeBlackHighBrush" Color="#FF1B1C24" />
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeBlackMediumLowBrush" Color="#FF21222C" />
+            <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="#FF21222C" />
+            <SolidColorBrush x:Key="SystemControlBackgroundAltMediumHighBrush" Color="#FF21222C" />
+            <SolidColorBrush x:Key="SystemControlBackgroundAltMediumBrush" Color="#FF21222C" />
+            <SolidColorBrush x:Key="SystemControlBackgroundAltMediumLowBrush" Color="#FF1B1C24" />
+            <SolidColorBrush x:Key="SystemControlBackgroundAltLowBrush" Color="#FF282A36" />
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseMediumBrush" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseMediumLowBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseMediumHighBrush" Color="#FF7E89B8" />
+            <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#FF503D72" />
+            <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#FF7B5DB0" />
+            <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#FF9D7BD8" />
+
+            <!-- Foreground/Text-Brushes: cream + abgestufte sekundäre Werte. -->
+            <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumHighBrush" Color="#FFE0E2EF" />
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="#FFC5C9DC" />
+            <SolidColorBrush x:Key="SystemControlForegroundBaseMediumLowBrush" Color="#FF8E94B0" />
+            <SolidColorBrush x:Key="SystemControlForegroundBaseLowBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="SystemControlForegroundChromeMediumBrush" Color="#FFC5C9DC" />
+            <SolidColorBrush x:Key="SystemControlForegroundChromeDisabledLowBrush" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="SystemControlForegroundAltHighBrush" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="SystemControlForegroundAccentBrush" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="SystemControlDisabledBaseLowBrush" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="SystemControlDisabledBaseMediumLowBrush" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="SystemControlDisabledChromeDisabledLowBrush" Color="#FF6272A4" />
+
+            <!-- TextBox/TextControl-Backgrounds (Fluent-spezifisch). -->
+            <SolidColorBrush x:Key="TextControlBackground" Color="#FF21222C" />
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#FF1B1C24" />
+            <SolidColorBrush x:Key="TextControlForeground" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="TextControlBorderBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="#FF383A4A" />
+
+            <!-- Button-Backgrounds. -->
+            <SolidColorBrush x:Key="ButtonBackground" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#FF1B1C24" />
+            <SolidColorBrush x:Key="ButtonForeground" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#FFEEDDFF" />
+            <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#FF383A4A" />
+
+            <!-- ListBox/ComboBox-Items. -->
+            <SolidColorBrush x:Key="ListBoxItemBackgroundSelected" Color="#FF503D72" />
+            <SolidColorBrush x:Key="ListBoxItemBackgroundSelectedPointerOver" Color="#FF7B5DB0" />
+            <SolidColorBrush x:Key="ListBoxItemBackgroundSelectedPressed" Color="#FF9D7BD8" />
+            <SolidColorBrush x:Key="ListBoxItemBackgroundPointerOver" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="ListBoxItemForegroundSelected" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="ListBoxItemForegroundSelectedPointerOver" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ListBoxItemForegroundSelectedPressed" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ListBoxItemForegroundPointerOver" Color="#FFF8F8F2" />
+
+            <SolidColorBrush x:Key="ComboBoxBackground" Color="#FF21222C" />
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="ComboBoxBackgroundFocusedPressed" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ComboBoxForeground" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FF21222C" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#FF503D72" />
+            <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#FF7B5DB0" />
+            <SolidColorBrush x:Key="ComboBoxItemForeground" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="ComboBoxItemForegroundPointerOver" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPointerOver" Color="#FFFFFFFF" />
+
+            <!-- ScrollBar / Thumb. -->
+            <SolidColorBrush x:Key="ScrollBarBackground" Color="#FF282A36" />
+            <SolidColorBrush x:Key="ScrollBarThumbBackgroundColor" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ScrollBarThumbFill" Color="#FF44475A" />
+            <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#FF6272A4" />
+            <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#FFBD93F9" />
+
+            <!-- Error / Destructive -->
+            <SolidColorBrush x:Key="SystemControlErrorTextForegroundBrush" Color="#FFFF5555" />
+            <SolidColorBrush x:Key="SystemErrorTextColor" Color="#FFFF5555" />
+
+            <!-- Custom App-spezifische Brushes (im MainWindow referenziert).
+                 So muss MainWindow nicht jede Hex direkt kennen. -->
+            <SolidColorBrush x:Key="AppWindowBackgroundBrush" Color="#FF282A36" />
+            <SolidColorBrush x:Key="AppPanelBackgroundBrush" Color="#FF21222C" />
+            <SolidColorBrush x:Key="AppSurface2Brush" Color="#FF383A4A" />
+            <SolidColorBrush x:Key="AppDividerBrush" Color="#FF44475A" />
+            <SolidColorBrush x:Key="AppAccentBrush" Color="#FFBD93F9" />
+            <SolidColorBrush x:Key="AppAccentSoftBrush" Color="#FF503D72" />
+            <SolidColorBrush x:Key="AppForegroundBrush" Color="#FFF8F8F2" />
+            <SolidColorBrush x:Key="AppForegroundMutedBrush" Color="#FFC5C9DC" />
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+    </Application.Styles>
+</Application>

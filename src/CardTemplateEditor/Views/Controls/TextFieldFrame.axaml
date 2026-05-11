@@ -1,0 +1,282 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CardTemplateEditor.ViewModels"
+             x:Class="CardTemplateEditor.Views.Controls.TextFieldFrame"
+             x:DataType="vm:TextFieldViewModel"
+             Width="{Binding OuterWidth}"
+             Height="{Binding OuterHeight}"
+             RenderTransformOrigin="{Binding RotationOriginRelative}"
+             ClipToBounds="False">
+
+    <UserControl.Styles>
+        <!-- Mode-spezifische Füllfarben der 8 Resize-Handles. Klassen werden
+             vom Code-Behind aus MainWindowViewModel.EditMode synchronisiert
+             (siehe ApplyModeClasses). Ohne Klasse fallen wir auf Scale-Blau
+             zurück, damit der Frame auch ohne Owner (Tests, Designer) sinnvoll
+             aussieht.
+
+             Hover-Vergrößerung der Handles (Iteration 13 Sub-Task E): bei
+             :pointerover wird das gehoverte Handle per RenderTransform um den
+             Faktor 1.6 vergrößert und mit dickerer Stroke umrandet. So sieht
+             der User auf einen Blick, welches Handle er gerade trifft, und
+             welcher Mode beim Klick wirken würde (Farbe = Mode). -->
+        <Style Selector="Rectangle.handle">
+            <Setter Property="Fill" Value="DodgerBlue" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+        </Style>
+        <Style Selector="Rectangle.handle.scale">
+            <Setter Property="Fill" Value="DodgerBlue" />
+        </Style>
+        <Style Selector="Rectangle.handle.distort">
+            <Setter Property="Fill" Value="Gold" />
+        </Style>
+        <Style Selector="Rectangle.handle.skew">
+            <Setter Property="Fill" Value="MediumSeaGreen" />
+        </Style>
+        <Style Selector="Rectangle.handle.rotate">
+            <Setter Property="Fill" Value="Orange" />
+        </Style>
+        <Style Selector="Rectangle.handle:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.6)" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.RenderTransform>
+        <RotateTransform Angle="{Binding Rotation}" />
+    </UserControl.RenderTransform>
+
+    <!-- Outer Grid mit Outer-Padding-Margin um das eigentliche Textfeld:
+         der Bereich ausserhalb des inneren Frames dient ausschliesslich als
+         Hit-Test-Fläche für Rotation-Handle (Top-Mitte) und Eckpunkt-Warp-
+         Handles (4 Ecken). Negative Margins für Außen-Handles sind in
+         Avalonia nicht hit-testbar (siehe Iteration 4 Lessons), deshalb
+         dieser Aufbau. -->
+    <Grid Name="OuterRoot" ClipToBounds="False">
+
+        <!-- Inner frame: DragBorder + TextBox + 8 Resize-Handles.
+             Sitzt mit Margin=OuterPadding zentriert im OuterRoot. -->
+        <Grid Margin="32">
+            <!-- Outer drag border. Background=Transparent so it receives pointer events.
+                 Padding=8 schafft einen klickbaren Drag-Streifen rund um die TextBox,
+                 damit Drag auch außerhalb der inneren Editier-Fläche möglich ist.
+                 WICHTIG: Padding hier (8) + TextBox-Padding (2) = 10 Pixel Gesamt-Inset.
+                 ExportService spiegelt denselben Inset über TextFieldGeometry.TextInset.
+                 Wenn diese Werte auseinanderlaufen, weicht der gespeicherte Text vom
+                 Editor-Layout ab. -->
+            <Border Name="DragBorder"
+                    BorderBrush="{DynamicResource SystemAccentColorBrush}"
+                    BorderThickness="{Binding EffectiveBorderThickness}"
+                    Background="Transparent"
+                    Padding="8"
+                    Cursor="SizeAll"
+                    Focusable="True"
+                    IsTabStop="False">
+                <!-- Visuelle Fokus-Verstärkung am DragBorder: BorderThickness wechselt
+                     von 1 auf 2, sobald die enthaltene TextBox fokussiert ist.
+                     Inhaltlich bleibt der Frame transparent — der User erkennt
+                     "aktiv" am dickeren Akzentrahmen, nicht an einer Hintergrundfarbe.
+                     Fluent-Theme zeichnet PART_BorderElement im :focus / :pointerover-
+                     State mit einem hellen, fast deckenden Background
+                     (TextControlBackgroundFocused). Bei weißem Text wird der Inhalt
+                     dadurch unlesbar — wir halten den Hintergrund deshalb in ALLEN
+                     States transparent. -->
+                <Border.Styles>
+                    <Style Selector="Border#DragBorder:focus-within">
+                        <Setter Property="BorderThickness" Value="2" />
+                    </Style>
+                    <Style Selector="TextBox /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                    <Style Selector="TextBox:focus-within /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                </Border.Styles>
+                <TextBox Name="TextEditor"
+                         Text="{Binding CurrentText, Mode=TwoWay}"
+                         AcceptsReturn="True"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         FontFamily="{Binding FontFamilyValue}"
+                         FontSize="{Binding FontSize}"
+                         FontWeight="{Binding FontWeightValue}"
+                         Foreground="{Binding ColorValue, Converter={x:Static vm:ColorBrushConverter.Instance}}"
+                         TextAlignment="{Binding TextAlignmentValue}"
+                         VerticalContentAlignment="{Binding VerticalContentAlignmentValue}"
+                         Padding="2"
+                         Opacity="{Binding EditableTextOpacity}" />
+            </Border>
+
+            <!-- Die 8 Resize/Distort/Skew-Handles wurden aus diesem inneren Grid
+                 entfernt und sitzen jetzt einheitlich in HandlesHost (siehe unten) —
+                 an den verzerrten Quad-Punkten und mit Modifier-basiertem Modus
+                 (default = Scale, Strg = Distort, Strg+Shift = Skew). -->
+        </Grid>
+
+        <!-- Rotation-Handle: orange Ellipse oberhalb des inneren Frames,
+             zentriert horizontal. Sitzt im Outer-Padding-Bereich (oberhalb Margin=32).
+             Drag rotiert um den Frame-Mittelpunkt.
+             Größe wird durch EffectiveScale kompensiert, damit der Handle bei
+             auto-fit-verkleinerten hochauflösenden Bildern noch treffbar bleibt. -->
+        <Ellipse Name="HandleRotate"
+                 Width="{Binding EffectiveRotateHandleSize}"
+                 Height="{Binding EffectiveRotateHandleSize}"
+                 Fill="Orange"
+                 Stroke="White" StrokeThickness="1.5"
+                 ZIndex="20"
+                 HorizontalAlignment="Center" VerticalAlignment="Top"
+                 Margin="0,8,0,0"
+                 Cursor="Hand"
+                 ToolTip.Tip="Drehen — Ziehen rotiert das Textfeld" />
+
+        <!-- Verbinder vom Rotation-Handle zur Frame-Oberkante; rein dekorativ,
+             damit der User sieht, wozu der Handle gehört. IsHitTestVisible=False
+             damit dieser Strich keine Drags abfängt. -->
+        <Line StartPoint="0,22" EndPoint="0,32"
+              Stroke="Orange" StrokeThickness="1.5"
+              IsHitTestVisible="False"
+              ZIndex="19"
+              HorizontalAlignment="Center" VerticalAlignment="Top" />
+
+        <!-- Live-Perspektiv-Vorschau: zeigt den projektiv verzerrten Text als
+             Bitmap-Overlay. Die Bitmap-Größe wird dynamisch an die Bounding-
+             Box des verzerrten Quads angepasst — wir positionieren sie via
+             Canvas.Left/Top mit dem berechneten Offset (kann negativ werden,
+             wenn Eckpunkte das UserControl-Rect verlassen). ClipToBounds=False
+             lässt überstehende Bereiche durch (UserControl + OuterRoot haben
+             ClipToBounds=False bereits oben).
+             IsHitTestVisible=False damit Klicks zu TextBox/Handles durchschlagen.
+             ZIndex=14 → unter Wireframe (15) und Handles (20), aber über dem
+             inneren Grid (TextBox + Resize-Handles). -->
+        <Canvas Name="WarpPreviewHost"
+                IsHitTestVisible="False"
+                ClipToBounds="False"
+                ZIndex="14">
+            <Image Name="WarpPreviewImage"
+                   Source="{Binding WarpPreviewBitmap}"
+                   IsVisible="{Binding ShouldShowPreview}"
+                   Stretch="None"
+                   Canvas.Left="{Binding WarpPreviewOffsetX}"
+                   Canvas.Top="{Binding WarpPreviewOffsetY}" />
+        </Canvas>
+
+        <!-- Wireframe-Vorschau des Ziel-Quadrilaterals (4 verbundene Linien
+             durch die warped corners). Wird nur angezeigt, wenn IsWarped=True.
+             Ergänzt das Bitmap-Overlay um eine harte Kantenführung — der User
+             sieht so auch bei sehr kurzem oder leerem Text, wohin die Ecken
+             gewandert sind.
+             IsHitTestVisible=False damit die Linien keine Pointer-Events fressen.
+             ZIndex=15 (über dem Vorschau-Bitmap, unter den Handles). -->
+        <Canvas IsHitTestVisible="False" ZIndex="15"
+                ClipToBounds="False"
+                IsVisible="{Binding IsWarped}">
+            <Line StartPoint="{Binding WarpNWPoint}" EndPoint="{Binding WarpNEPoint}"
+                  Stroke="OrangeRed" StrokeThickness="1.5" StrokeDashArray="4,2" />
+            <Line StartPoint="{Binding WarpNEPoint}" EndPoint="{Binding WarpSEPoint}"
+                  Stroke="OrangeRed" StrokeThickness="1.5" StrokeDashArray="4,2" />
+            <Line StartPoint="{Binding WarpSEPoint}" EndPoint="{Binding WarpSWPoint}"
+                  Stroke="OrangeRed" StrokeThickness="1.5" StrokeDashArray="4,2" />
+            <Line StartPoint="{Binding WarpSWPoint}" EndPoint="{Binding WarpNWPoint}"
+                  Stroke="OrangeRed" StrokeThickness="1.5" StrokeDashArray="4,2" />
+        </Canvas>
+
+        <!-- Drehpunkt-Marker (Plus-Symbol) — sitzt im OuterRoot am
+             RotationOriginPoint. Per Drag verschiebbar; das XAML-Render-
+             TransformOrigin am UserControl folgt der Position automatisch.
+             ZIndex=16: über dem Wireframe (15), unter den Handles (20). -->
+        <Canvas Name="OriginMarkerHost" ZIndex="16" ClipToBounds="False">
+            <Path Name="HandleOrigin"
+                  Cursor="Hand"
+                  Stroke="Orange"
+                  StrokeThickness="{Binding EffectiveBorderThickness}"
+                  Fill="#80FFA500"
+                  ToolTip.Tip="Drehpunkt — ziehen verschiebt den Drehpunkt; der orange Rotation-Handle dreht um diesen Punkt"
+                  Width="{Binding EffectiveOriginCrossSize}"
+                  Height="{Binding EffectiveOriginCrossSize}"
+                  Stretch="Fill"
+                  Canvas.Left="{Binding RotationOriginCanvasX}"
+                  Canvas.Top="{Binding RotationOriginCanvasY}"
+                  Data="M 5,0 L 7,0 L 7,5 L 12,5 L 12,7 L 7,7 L 7,12 L 5,12 L 5,7 L 0,7 L 0,5 L 5,5 Z" />
+        </Canvas>
+
+        <!-- Einheitlicher Handle-Satz (Photoshop-Free-Transform-Pattern):
+             4 Eck-Handles + 4 Edge-Handles, alle in DodgerBlue, alle am
+             tatsächlichen Quad-Punkt (= Box-Eck/Kante + Warp-Offset).
+             Modifier-basiertes Verhalten beim Drag (siehe Code-Behind):
+             • ohne Modifier  → Scale (Box-Resize, ComputeResize-Logik)
+             • Strg           → Distort (nur Eckpunkt, nur an Ecken)
+             • Strg + Shift   → Skew  (zwei Eckpunkte parallel, nur an Kanten)
+             ClipToBounds=False, damit die Handles auch dann sichtbar bleiben,
+             wenn ein Eckpunkt das UserControl verlässt. -->
+        <Canvas Name="HandlesHost" ZIndex="20" ClipToBounds="False">
+            <!-- Größe und Stroke-Dicke aller 8 Handles werden über EffectiveScale
+                 in Bild-Pixel-Coords umgerechnet, damit sie auf dem Bildschirm
+                 immer gleich groß bleiben (= treffbar auch bei hochauflösenden
+                 Bildern, die per Auto-Fit stark verkleinert werden).
+                 Klassen-Tag "handle" + Mode-Klasse (siehe Mode-Switcher) wird
+                 vom Code-Behind gesetzt; Style-Selektoren in App.axaml liefern
+                 die Mode-Farbe und das :pointerover-Highlight. -->
+            <!-- Ecken (Tag = NW/NE/SE/SW). Im Skew-Modus (Shift+Alt) sind
+                 sie unsichtbar, weil Skew nur an den Edge-Handles wirkt. -->
+            <Rectangle Name="HandleNW" Tag="NW" Classes="handle"
+                       IsVisible="{Binding ShowCornerHandles}"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="TopLeftCorner"
+                       ToolTip.Tip="Eckpunkt — Drag = Skalieren · Strg = Perspektive · Alt = Aspekt-Lock"
+                       Canvas.Left="{Binding HandleNWX}" Canvas.Top="{Binding HandleNWY}" />
+            <Rectangle Name="HandleNE" Tag="NE" Classes="handle"
+                       IsVisible="{Binding ShowCornerHandles}"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="TopRightCorner"
+                       ToolTip.Tip="Eckpunkt — Drag = Skalieren · Strg = Perspektive · Alt = Aspekt-Lock"
+                       Canvas.Left="{Binding HandleNEX}" Canvas.Top="{Binding HandleNEY}" />
+            <Rectangle Name="HandleSE" Tag="SE" Classes="handle"
+                       IsVisible="{Binding ShowCornerHandles}"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="BottomRightCorner"
+                       ToolTip.Tip="Eckpunkt — Drag = Skalieren · Strg = Perspektive · Alt = Aspekt-Lock"
+                       Canvas.Left="{Binding HandleSEX}" Canvas.Top="{Binding HandleSEY}" />
+            <Rectangle Name="HandleSW" Tag="SW" Classes="handle"
+                       IsVisible="{Binding ShowCornerHandles}"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="BottomLeftCorner"
+                       ToolTip.Tip="Eckpunkt — Drag = Skalieren · Strg = Perspektive · Alt = Aspekt-Lock"
+                       Canvas.Left="{Binding HandleSWX}" Canvas.Top="{Binding HandleSWY}" />
+            <!-- Kantenmittelpunkte (Tag = N/E/S/W) -->
+            <Rectangle Name="HandleN" Tag="N" Classes="handle"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="SizeNorthSouth"
+                       ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
+                       Canvas.Left="{Binding HandleNX}" Canvas.Top="{Binding HandleNY}" />
+            <Rectangle Name="HandleE" Tag="E" Classes="handle"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="SizeWestEast"
+                       ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
+                       Canvas.Left="{Binding HandleEX}" Canvas.Top="{Binding HandleEY}" />
+            <Rectangle Name="HandleS" Tag="S" Classes="handle"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="SizeNorthSouth"
+                       ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
+                       Canvas.Left="{Binding HandleSX}" Canvas.Top="{Binding HandleSY}" />
+            <Rectangle Name="HandleW" Tag="W" Classes="handle"
+                       Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
+                       Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
+                       Cursor="SizeWestEast"
+                       ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
+                       Canvas.Left="{Binding HandleWX}" Canvas.Top="{Binding HandleWY}" />
+        </Canvas>
+
+    </Grid>
+</UserControl>

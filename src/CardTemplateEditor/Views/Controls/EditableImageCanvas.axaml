@@ -1,0 +1,146 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CardTemplateEditor.ViewModels"
+             xmlns:controls="using:CardTemplateEditor.Views.Controls"
+             x:Class="CardTemplateEditor.Views.Controls.EditableImageCanvas"
+             x:DataType="vm:ImageSlotViewModel">
+
+    <UserControl.Resources>
+        <!-- Photoshop-artiges Schachbrett-Muster im Bildhintergrund, damit
+             transparente Bereiche eines PNG sichtbar werden. -->
+        <VisualBrush x:Key="TransparencyChecker"
+                     TileMode="Tile"
+                     SourceRect="0,0,16,16"
+                     DestinationRect="0,0,16,16">
+            <VisualBrush.Visual>
+                <Canvas Width="16" Height="16" Background="#F4F4F4">
+                    <Rectangle Canvas.Left="0" Canvas.Top="0" Width="8" Height="8" Fill="#D6D6D6" />
+                    <Rectangle Canvas.Left="8" Canvas.Top="8" Width="8" Height="8" Fill="#D6D6D6" />
+                </Canvas>
+            </VisualBrush.Visual>
+        </VisualBrush>
+    </UserControl.Resources>
+
+    <Border Name="OuterBorder"
+            BorderThickness="2"
+            BorderBrush="Transparent"
+            Padding="4">
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,4">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Name}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <!-- Eindeutiger Marker: in DIESEN Slot würde "+ Textfeld hinzufügen" einfügen. -->
+                <Border Grid.Column="1"
+                        Background="{DynamicResource SystemAccentColorBrush}"
+                        CornerRadius="3"
+                        Padding="6,1"
+                        Margin="0,0,8,0"
+                        IsVisible="{Binding IsSelected}">
+                    <TextBlock Text="aktiv"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="White" />
+                </Border>
+                <!-- Zoom-Steuerung: −/+ und Reset auf "Fit" (Faktor 1).
+                     Ctrl+Mausrad funktioniert zusätzlich (siehe Code-Behind). -->
+                <Button Grid.Column="2" Content="−" Padding="6,0" Margin="0,0,2,0"
+                        Click="OnZoomOutClick" ToolTip.Tip="Verkleinern (Strg+Mausrad)" />
+                <TextBlock Grid.Column="3" Text="{Binding ZoomDisplay}"
+                           VerticalAlignment="Center" Margin="2,0" FontSize="11"
+                           MinWidth="42" TextAlignment="Center" />
+                <Button Grid.Column="4" Content="+" Padding="6,0" Margin="2,0,4,0"
+                        Click="OnZoomInClick" ToolTip.Tip="Vergrößern (Strg+Mausrad)" />
+                <Button Grid.Column="5" Content="Fit" Padding="6,0" FontSize="11"
+                        Click="OnZoomResetClick" ToolTip.Tip="Auf Slot-Größe zurücksetzen" />
+            </Grid>
+
+            <!-- Schachbrett-Hintergrund auf dem KOMPLETTEN Bild-Bereich (Border um die
+                 Viewbox), damit der Checker auch dort sichtbar bleibt, wo Aspect-Ratio-
+                 Padding der Viewbox keine Bildpixel zeichnet. Da der Checker außerhalb
+                 der Viewbox liegt, bleibt die Tile-Größe in Device-Pixeln konstant —
+                 unabhängig vom Auto-Fit-Zoom des Bildes. -->
+            <Border Background="{StaticResource TransparencyChecker}">
+                <!-- ScrollViewer + Viewbox-Stack: Auto-Fit + User-Zoom kombinieren.
+                     Die Viewbox skaliert das Bitmap an die Slot-Größe (Stretch=Uniform).
+                     Eine LayoutTransform=ScaleTransform multipliziert diesen Auto-Fit
+                     mit dem ZoomFactor des ViewModels — bei ZoomFactor=1 entsteht das
+                     bisherige "Fit"-Verhalten, bei größeren Werten wird die Viewbox
+                     größer als der Slot, der ScrollViewer wird sichtbar und der User
+                     kann scrollen, um über das Slot-Rect hinausgezogene Eckpunkte
+                     zu erreichen. -->
+                <!-- HorizontalContentAlignment+VerticalContentAlignment=Center:
+                     wenn Auto-Fit kleiner als der Slot ausfällt (z. B. weil das
+                     Bild querformatig ist und der Slot quadratisch wird),
+                     bleibt das Bild zentriert statt am oberen Rand zu kleben.
+                     Sonst rutscht das Bild mit jedem Resize aus dem Sichtbereich. -->
+                <ScrollViewer Name="ZoomScroller"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalContentAlignment="Center"
+                              VerticalContentAlignment="Center">
+                <!-- Kein Viewbox mehr: der Auto-Fit wird im Code-Behind aus
+                     ScrollViewer-Bounds und PixelWidth/Height berechnet und
+                     mit dem User-ZoomFactor zu einer EffectiveScale verrechnet
+                     (siehe RefreshEffectiveScale). So funktioniert ZoomFactor<1
+                     korrekt (Inhalt schrumpft unter Auto-Fit) und der Maus-
+                     Anker für Strg+Wheel kann sauber Scroll-Offset nachziehen. -->
+                <!-- HorizontalAlignment/VerticalAlignment=Center: das ist
+                     der Hebel, der die Bilder im Editor wirklich zentriert
+                     hält, wenn das Fenster kleiner wird. ScrollViewer
+                     bekommt Auto-Fit-skalierten Content, der bei zoomFactor=1
+                     immer in den Viewport passt — mit Center-Alignment
+                     bleibt er auch dann mittig, wenn die Auto-Fit-Skala
+                     Aspekt-bedingt eine Achse leer lässt (z. B. Hochkant-
+                     Bild im Querformat-Slot). HorizontalContentAlignment
+                     auf dem ScrollViewer reicht in Avalonia nicht — der
+                     ScrollContentPresenter ankert Content sonst oben
+                     links und das Bild rutscht beim Resize aus dem Sicht-
+                     bereich. -->
+                <LayoutTransformControl Name="ZoomLayoutHost"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                    <LayoutTransformControl.LayoutTransform>
+                        <ScaleTransform />
+                    </LayoutTransformControl.LayoutTransform>
+                    <Grid Name="ContentRoot"
+                          Width="{Binding PixelWidth}"
+                          Height="{Binding PixelHeight}">
+                        <Image Source="{Binding Bitmap}" Stretch="Fill" />
+
+                        <ItemsControl Name="TextFieldsHost"
+                                      ItemsSource="{Binding TextFields}"
+                                      ClipToBounds="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas ClipToBounds="False" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.Styles>
+                                <Style Selector="ContentPresenter" x:DataType="vm:TextFieldViewModel">
+                                    <!-- OuterX/OuterY = X/Y minus OuterPadding: das eigentliche
+                                         Modell-Rechteck sitzt mit OuterPadding-Innenabstand im
+                                         UserControl, damit Rotation- und Eckpunkt-Handles im
+                                         Outer-Bereich hit-testbar sind.
+                                         ClipToBounds=False: Warp-Handles und Vorschau-Bitmap
+                                         dürfen über die UserControl-Bounds hinausragen, damit
+                                         der User Eckpunkte über das gesamte Bild ziehen kann. -->
+                                    <Setter Property="Canvas.Left" Value="{Binding OuterX}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding OuterY}" />
+                                    <Setter Property="ClipToBounds" Value="False" />
+                                </Style>
+                            </ItemsControl.Styles>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:TextFieldViewModel">
+                                    <controls:TextFieldFrame />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </LayoutTransformControl>
+                </ScrollViewer>
+            </Border>
+        </DockPanel>
+    </Border>
+</UserControl>

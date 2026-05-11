@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:Avalonia.Data.Converters"
+             x:Class="CardTemplateEditor.Views.Controls.InlineEditableLabel"
+             x:Name="Root"
+             Focusable="False"
+             ClipToBounds="True">
+
+    <Grid>
+        <!-- Default-Zustand: TextBlock — Klick erreicht den Listeneintrag und selektiert ihn,
+             ohne in den Edit-Modus zu springen. -->
+        <TextBlock x:Name="LabelPart"
+                   Text="{Binding #Root.Text}"
+                   VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis"
+                   IsVisible="{Binding #Root.IsEditing,
+                              Converter={x:Static converters:BoolConverters.Not}}" />
+
+        <!-- Edit-Zustand: nur sichtbar nach Doppelklick. Verlässt der Fokus die Box
+             oder drückt der User Enter/Escape, fällt das Control zurück auf den TextBlock. -->
+        <TextBox x:Name="EditPart"
+                 Text="{Binding #Root.Text, Mode=TwoWay}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 Padding="0"
+                 MinHeight="0"
+                 VerticalContentAlignment="Center"
+                 IsVisible="{Binding #Root.IsEditing}" />
+    </Grid>
+</UserControl>

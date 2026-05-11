@@ -1,0 +1,24 @@
+# Build-Output
+bin/
+obj/
+out/
+
+# IDE / Editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Rider / ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / Tooling
+*.log
+TestResults/
+.coverage/
