@@ -146,6 +146,7 @@ public class EditModeTests : IDisposable
         var fieldVm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
 
         var frame = new TextFieldFrame { DataContext = fieldVm };
+        fieldVm.IsSelected = true; // Border/Handles sind nur am selektierten Feld sichtbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -177,6 +178,7 @@ public class EditModeTests : IDisposable
         var fieldVm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
 
         var frame = new TextFieldFrame { DataContext = fieldVm };
+        fieldVm.IsSelected = true; // Border/Handles sind nur am selektierten Feld sichtbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -211,6 +213,7 @@ public class EditModeTests : IDisposable
         var fieldVm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
 
         var frame = new TextFieldFrame { DataContext = fieldVm };
+        fieldVm.IsSelected = true; // Border/Handles sind nur am selektierten Feld sichtbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         var window = new Window { Width = 400, Height = 300, Content = canvas, DataContext = owner };
         window.Show();
@@ -231,6 +234,98 @@ public class EditModeTests : IDisposable
         Dispatcher.UIThread.RunJobs();
         Assert.False(fieldVm.IsSkewActive);
         Assert.True(handleNW.IsVisible);
+
+        window.Close();
+    }
+
+    // --- Border / Handles nur am selektierten TextField ---------------------
+
+    [AvaloniaFact]
+    public void Chrome_IsHidden_OnUnselectedField_AndAppears_WhenIsSelectedFlipsToTrue()
+    {
+        // User-Request: Border + Eckpunkte/Handles sollen nur am gerade
+        // bearbeiteten (= selektierten) TextField sichtbar sein. Wir prüfen
+        // direkt am gerenderten Frame, dass IsVisible auf den vier Edge-
+        // /Corner-Handles, dem Rotate-Handle und dem Origin-Marker dem
+        // IsSelected-Flag folgt — und der DragBorder seine Linie weglässt
+        // (BorderThickness = 0), aber als Hit-Test-Fläche (Background=Transparent)
+        // erhalten bleibt.
+        var fieldVm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
+
+        var frame = new TextFieldFrame { DataContext = fieldVm };
+        var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
+        Canvas.SetLeft(frame, 0);
+        Canvas.SetTop(frame, 0);
+        var window = new Window { Width = 400, Height = 300, Content = canvas };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var handleNW = frame.FindControl<AvRectangle>("HandleNW");
+        var handleE = frame.FindControl<AvRectangle>("HandleE");
+        var handleRotate = frame.FindControl<Avalonia.Controls.Shapes.Ellipse>("HandleRotate");
+        var handleOrigin = frame.FindControl<Avalonia.Controls.Shapes.Path>("HandleOrigin");
+        Assert.NotNull(handleNW);
+        Assert.NotNull(handleE);
+        Assert.NotNull(handleRotate);
+        Assert.NotNull(handleOrigin);
+
+        // Default IsSelected = false: kein sichtbarer Border, keine Handles.
+        Assert.False(fieldVm.IsSelected);
+        Assert.Equal(0.0, fieldVm.ChromeBorderThickness);
+        Assert.False(handleNW!.IsVisible);
+        Assert.False(handleE!.IsVisible);
+        Assert.False(handleRotate!.IsVisible);
+        // Origin sitzt in einem Canvas mit IsVisible-Binding — wir prüfen den
+        // Marker selbst über IsEffectivelyVisible, das den Eltern-Status mit
+        // berücksichtigt (analog zu Avalonia-Render-Pipeline).
+        Assert.False(handleOrigin!.IsEffectivelyVisible);
+
+        // Selektion gesetzt: Border + alle Handles erscheinen.
+        fieldVm.IsSelected = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(fieldVm.ChromeBorderThickness > 0);
+        Assert.True(handleNW.IsVisible);
+        Assert.True(handleE.IsVisible);
+        Assert.True(handleRotate.IsVisible);
+        Assert.True(handleOrigin.IsEffectivelyVisible);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Wireframe_OnlyShows_WhenSelected_AndWarped()
+    {
+        // Wireframe (gestricheltes Quad) sollte selbst bei warped Feldern
+        // ausgeblendet sein, wenn das Feld nicht selektiert ist — sonst
+        // bekommt eine ganze Karte voller verzerrter Felder einen Wirrwarr
+        // an Hilfslinien.
+        var fieldVm = new TextFieldViewModel(new TextField
+        {
+            Width = 200, Height = 40, CornerSEdx = 25, CornerSEdy = 10,
+        });
+        Assert.True(fieldVm.IsWarped);
+
+        var frame = new TextFieldFrame { DataContext = fieldVm };
+        var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
+        Canvas.SetLeft(frame, 0);
+        Canvas.SetTop(frame, 0);
+        var window = new Window { Width = 400, Height = 300, Content = canvas };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(fieldVm.ShowWireframe);
+
+        fieldVm.IsSelected = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(fieldVm.ShowWireframe);
+
+        // Warp entfernen → Wireframe trotz Selektion still.
+        fieldVm.CornerSEdx = 0;
+        fieldVm.CornerSEdy = 0;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(fieldVm.IsWarped);
+        Assert.False(fieldVm.ShowWireframe);
 
         window.Close();
     }

@@ -65,7 +65,7 @@
                  Editor-Layout ab. -->
             <Border Name="DragBorder"
                     BorderBrush="{DynamicResource SystemAccentColorBrush}"
-                    BorderThickness="{Binding EffectiveBorderThickness}"
+                    BorderThickness="{Binding ChromeBorderThickness}"
                     Background="Transparent"
                     Padding="8"
                     Cursor="SizeAll"
@@ -126,6 +126,7 @@
         <Ellipse Name="HandleRotate"
                  Width="{Binding EffectiveRotateHandleSize}"
                  Height="{Binding EffectiveRotateHandleSize}"
+                 IsVisible="{Binding ShowChrome}"
                  Fill="Orange"
                  Stroke="White" StrokeThickness="1.5"
                  ZIndex="20"
@@ -140,6 +141,7 @@
         <Line StartPoint="0,22" EndPoint="0,32"
               Stroke="Orange" StrokeThickness="1.5"
               IsHitTestVisible="False"
+              IsVisible="{Binding ShowChrome}"
               ZIndex="19"
               HorizontalAlignment="Center" VerticalAlignment="Top" />
 
@@ -174,7 +176,7 @@
              ZIndex=15 (über dem Vorschau-Bitmap, unter den Handles). -->
         <Canvas IsHitTestVisible="False" ZIndex="15"
                 ClipToBounds="False"
-                IsVisible="{Binding IsWarped}">
+                IsVisible="{Binding ShowWireframe}">
             <Line StartPoint="{Binding WarpNWPoint}" EndPoint="{Binding WarpNEPoint}"
                   Stroke="OrangeRed" StrokeThickness="1.5" StrokeDashArray="4,2" />
             <Line StartPoint="{Binding WarpNEPoint}" EndPoint="{Binding WarpSEPoint}"
@@ -189,7 +191,8 @@
              RotationOriginPoint. Per Drag verschiebbar; das XAML-Render-
              TransformOrigin am UserControl folgt der Position automatisch.
              ZIndex=16: über dem Wireframe (15), unter den Handles (20). -->
-        <Canvas Name="OriginMarkerHost" ZIndex="16" ClipToBounds="False">
+        <Canvas Name="OriginMarkerHost" ZIndex="16" ClipToBounds="False"
+                IsVisible="{Binding ShowChrome}">
             <Path Name="HandleOrigin"
                   Cursor="Hand"
                   Stroke="Orange"
@@ -251,26 +254,32 @@
                        Cursor="BottomLeftCorner"
                        ToolTip.Tip="Eckpunkt — Drag = Skalieren · Strg = Perspektive · Alt = Aspekt-Lock"
                        Canvas.Left="{Binding HandleSWX}" Canvas.Top="{Binding HandleSWY}" />
-            <!-- Kantenmittelpunkte (Tag = N/E/S/W) -->
+            <!-- Kantenmittelpunkte (Tag = N/E/S/W). Sichtbar nur wenn das
+                 Feld selektiert ist; Eck-Handles haben das gleiche Gate
+                 plus die Skew-Sperre über ShowCornerHandles. -->
             <Rectangle Name="HandleN" Tag="N" Classes="handle"
+                       IsVisible="{Binding ShowChrome}"
                        Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
                        Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
                        Cursor="SizeNorthSouth"
                        ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
                        Canvas.Left="{Binding HandleNX}" Canvas.Top="{Binding HandleNY}" />
             <Rectangle Name="HandleE" Tag="E" Classes="handle"
+                       IsVisible="{Binding ShowChrome}"
                        Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
                        Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
                        Cursor="SizeWestEast"
                        ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
                        Canvas.Left="{Binding HandleEX}" Canvas.Top="{Binding HandleEY}" />
             <Rectangle Name="HandleS" Tag="S" Classes="handle"
+                       IsVisible="{Binding ShowChrome}"
                        Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
                        Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
                        Cursor="SizeNorthSouth"
                        ToolTip.Tip="Kante — wirkt je nach gewähltem Mode"
                        Canvas.Left="{Binding HandleSX}" Canvas.Top="{Binding HandleSY}" />
             <Rectangle Name="HandleW" Tag="W" Classes="handle"
+                       IsVisible="{Binding ShowChrome}"
                        Width="{Binding EffectiveHandleSize}" Height="{Binding EffectiveHandleSize}"
                        Stroke="White" StrokeThickness="{Binding EffectiveBorderThickness}"
                        Cursor="SizeWestEast"

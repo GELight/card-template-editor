@@ -598,7 +598,11 @@ public class TextFieldViewModelTests
     [Fact]
     public void IsSkewActive_DefaultsFalse_ShowsCornerHandles()
     {
-        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
+        // Voraussetzung ist Selektion — sonst sind Eck-Handles ohnehin still.
+        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 })
+        {
+            IsSelected = true,
+        };
         Assert.False(vm.IsSkewActive);
         Assert.True(vm.ShowCornerHandles);
     }
@@ -606,7 +610,10 @@ public class TextFieldViewModelTests
     [Fact]
     public void IsSkewActive_True_HidesCornerHandles_AndRaisesPropertyChanged()
     {
-        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
+        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 })
+        {
+            IsSelected = true,
+        };
         var changes = new List<string?>();
         vm.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
 
@@ -724,5 +731,93 @@ public class TextFieldViewModelTests
         var rpNw = vm.RotationOriginRelative;
         Assert.Equal(32.0 / 264.0, rpNw.Point.X, precision: 4);
         Assert.Equal(32.0 / 164.0, rpNw.Point.Y, precision: 4);
+    }
+
+    // --- IsSelected / Chrome-Sichtbarkeit -----------------------------------
+
+    [Fact]
+    public void IsSelected_DefaultsFalse_HidesAllChrome()
+    {
+        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
+        Assert.False(vm.IsSelected);
+        Assert.False(vm.ShowChrome);
+        Assert.False(vm.ShowCornerHandles);
+        Assert.Equal(0.0, vm.ChromeBorderThickness);
+    }
+
+    [Fact]
+    public void IsSelected_True_RevealsBorderAndCornerHandles_AndRaisesNotifications()
+    {
+        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 });
+        var changes = new List<string?>();
+        vm.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
+
+        vm.IsSelected = true;
+
+        Assert.True(vm.ShowChrome);
+        Assert.True(vm.ShowCornerHandles);
+        Assert.True(vm.ChromeBorderThickness > 0);
+
+        // Bindings müssen alle relevanten Property-Notifications sehen, sonst
+        // updaten IsVisible/BorderThickness im XAML nicht live.
+        Assert.Contains(nameof(TextFieldViewModel.IsSelected), changes);
+        Assert.Contains(nameof(TextFieldViewModel.ShowChrome), changes);
+        Assert.Contains(nameof(TextFieldViewModel.ChromeBorderThickness), changes);
+        Assert.Contains(nameof(TextFieldViewModel.ShowCornerHandles), changes);
+        Assert.Contains(nameof(TextFieldViewModel.ShowWireframe), changes);
+    }
+
+    [Fact]
+    public void IsSelected_True_ButSkewActive_HidesCornerHandles_KeepsChrome()
+    {
+        // Skew-Mode blendet Eck-Handles aus, der restliche Chrome (Edge-
+        // Handles, Border, Rotate-Handle) bleibt sichtbar — wie bisher in
+        // Iteration 14 für selektierte Felder.
+        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 })
+        {
+            IsSelected = true,
+            IsSkewActive = true,
+        };
+
+        Assert.True(vm.ShowChrome);
+        Assert.False(vm.ShowCornerHandles);
+    }
+
+    [Fact]
+    public void ShowWireframe_NeedsBothWarpedAndSelected()
+    {
+        var vm = new TextFieldViewModel(new TextField
+        {
+            Width = 200, Height = 40, CornerSEdx = 12,
+        });
+
+        // Warped, aber nicht selektiert → Wireframe versteckt (sonst flutet eine
+        // ganze Karte mit Hilfslinien).
+        Assert.True(vm.IsWarped);
+        Assert.False(vm.IsSelected);
+        Assert.False(vm.ShowWireframe);
+
+        vm.IsSelected = true;
+        Assert.True(vm.ShowWireframe);
+
+        // Wenn der Warp wieder auf 0 geht, ist Wireframe trotz Selektion still.
+        vm.CornerSEdx = 0;
+        Assert.False(vm.ShowWireframe);
+    }
+
+    [Fact]
+    public void ChromeBorderThickness_FollowsEffectiveScale_WhenSelected()
+    {
+        // Zoom-Kompensation aus Iteration 13 muss auch für den jetzt
+        // konditional sichtbaren Border greifen — sonst wird die Linie auf
+        // verkleinerten Bildern unsichtbar dünn.
+        var vm = new TextFieldViewModel(new TextField { Width = 200, Height = 40 })
+        {
+            IsSelected = true,
+        };
+        Assert.Equal(TextFieldViewModel.BaseBorderThickness, vm.ChromeBorderThickness);
+
+        vm.EffectiveScale = 0.25;  // Auto-Fit verkleinert das Bild stark.
+        Assert.Equal(TextFieldViewModel.BaseBorderThickness / 0.25, vm.ChromeBorderThickness);
     }
 }

@@ -531,6 +531,33 @@ public class MainWindowViewModelCommandsTests : IDisposable
         Assert.False(slot2.IsSelected);
     }
 
+    [AvaloniaFact]
+    public void SelectedTextField_Sync_FlipsIsSelectedOnPreviousAndNew()
+    {
+        // Border und alle Resize-/Rotate-Handles sollen nur am aktuell
+        // selektierten TextField sichtbar sein — der Sync dafür sitzt in
+        // OnSelectedTextFieldChanged und spiegelt SelectedTextField auf
+        // TextFieldViewModel.IsSelected (analog zur ImageSlot-Selektion).
+        var mw = new MainWindowViewModel(_repo);
+        var template = mw.CreateNewTemplate();
+        var slot = mw.AddImage(CreateTestPng("bg.png"))!;
+        var f1 = mw.AddTextFieldToCurrentSlot()!;
+        var f2 = mw.AddTextFieldToCurrentSlot()!;
+
+        // AddTextFieldToCurrentSlot selektiert das gerade hinzugefügte Feld.
+        Assert.Same(f2, mw.SelectedTextField);
+        Assert.True(f2.IsSelected);
+        Assert.False(f1.IsSelected);
+
+        mw.SelectedTextField = f1;
+        Assert.True(f1.IsSelected);
+        Assert.False(f2.IsSelected);
+
+        mw.SelectedTextField = null;
+        Assert.False(f1.IsSelected);
+        Assert.False(f2.IsSelected);
+    }
+
     [Fact]
     public void SwitchingTemplate_DetachesOldSubscriptions_NoDirtyTriggerFromOld()
     {

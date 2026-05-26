@@ -299,6 +299,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -338,6 +339,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -378,6 +380,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -420,6 +423,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 600, Height = 400, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -455,6 +459,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 600, Height = 500, Children = { frame } };
         // Canvas.Left/Top so setzen, dass das innere Frame an (vm.X, vm.Y) sitzt.
         Canvas.SetLeft(frame, vm.OuterX);
@@ -507,6 +512,9 @@ public class TextFieldFrameTests
             owner.SelectedTextField = null;
 
             var frame = new TextFieldFrame { DataContext = fieldVm };
+            // KEIN fieldVm.IsSelected = true: dieser Test prüft, dass der Klick
+            // auf den DragBorder eines NICHT selektierten Feldes die Selektion
+            // setzt. DragBorder ist via Background=Transparent immer hit-testbar.
             var canvas = new Canvas { Width = 600, Height = 400, Children = { frame } };
             Canvas.SetLeft(frame, 0);
             Canvas.SetTop(frame, 0);
@@ -522,6 +530,8 @@ public class TextFieldFrameTests
             window.MouseUp(new Point(60, 36), MouseButton.Left);
 
             Assert.Same(fieldVm, owner.SelectedTextField);
+            // Nach dem Klick muss die Owner-Sync IsSelected auf dem VM gespiegelt haben.
+            Assert.True(fieldVm.IsSelected);
             window.Close();
         }
         finally
@@ -553,6 +563,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 600, Height = 400, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -594,6 +605,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -647,6 +659,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 300, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -685,6 +698,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 600, Height = 500, Children = { frame } };
         Canvas.SetLeft(frame, vm.OuterX);
         Canvas.SetTop(frame, vm.OuterY);
@@ -722,6 +736,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 200, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -755,6 +770,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 200, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);
@@ -784,6 +800,7 @@ public class TextFieldFrameTests
         });
 
         var frame = new TextFieldFrame { DataContext = vm };
+        vm.IsSelected = true; // Chrome (Border + Handles) ist nur am selektierten Feld sichtbar/hit-testbar.
         var canvas = new Canvas { Width = 400, Height = 200, Children = { frame } };
         Canvas.SetLeft(frame, 0);
         Canvas.SetTop(frame, 0);

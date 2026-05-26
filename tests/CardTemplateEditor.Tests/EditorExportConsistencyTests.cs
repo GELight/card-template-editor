@@ -453,6 +453,10 @@ public class EditorExportConsistencyTests : IDisposable
         const int canvasW = 1300, canvasH = 1400;
 
         var vm = new TextFieldViewModel(f);
+        // Chrome (Border, Wireframe, Handles) zeigt der Frame nur am selektierten
+        // Feld — vor dem Render simulieren, dass dieses Feld aktiv ist, damit die
+        // Render-Pipeline exakt wie zur Edit-Zeit läuft.
+        vm.IsSelected = true;
         var frame = new Views.Controls.TextFieldFrame { DataContext = vm };
         var canvas = new Avalonia.Controls.Canvas
         {

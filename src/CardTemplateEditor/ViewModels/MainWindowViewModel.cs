@@ -624,6 +624,17 @@ public partial class MainWindowViewModel : ViewModelBase
         AddTextFieldCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>
+    /// Spiegelt die Selektion auf die einzelnen <see cref="TextFieldViewModel.IsSelected"/>-
+    /// Flags. Nur das selektierte Feld zeigt seinen Bearbeitungsrahmen + Handles —
+    /// alle anderen Frames bleiben transparent und stören das Layout nicht.
+    /// </summary>
+    partial void OnSelectedTextFieldChanged(TextFieldViewModel? oldValue, TextFieldViewModel? newValue)
+    {
+        if (oldValue is not null) oldValue.IsSelected = false;
+        if (newValue is not null) newValue.IsSelected = true;
+    }
+
     partial void OnSelectedTextsetChanged(TextsetViewModel? value)
     {
         // Beim Anklicken eines Sets in der Sidebar fließen seine Werte direkt

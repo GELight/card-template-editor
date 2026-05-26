@@ -375,6 +375,7 @@ public class TextFieldViewModel : ViewModelBase
             OnPropertyChanged(nameof(EffectiveHandleHalfSize));
             OnPropertyChanged(nameof(EffectiveRotateHandleSize));
             OnPropertyChanged(nameof(EffectiveBorderThickness));
+            OnPropertyChanged(nameof(ChromeBorderThickness));
             // Handle-Positionen hängen über EffectiveHandleHalfSize indirekt
             // vom Scale ab — also müssen wir alle Position-Notifications
             // mitfeuern.
@@ -402,8 +403,53 @@ public class TextFieldViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Sichtbarkeits-Flag für die 4 Eck-Handles; Edge-Handles sind immer sichtbar.</summary>
-    public bool ShowCornerHandles => !_isSkewActive;
+    private bool _isSelected;
+
+    /// <summary>
+    /// True, wenn dieses TextField in MainWindowViewModel.SelectedTextField
+    /// liegt — wird vom Owner gespiegelt (siehe OnSelectedTextFieldChanged).
+    /// Steuert die Sichtbarkeit von Border, Resize-/Rotate-/Origin-Handles
+    /// und Wireframe: ohne Fokus zeigt der Frame nur Text + Hit-Test-Fläche,
+    /// damit das Layout nicht von Edit-Chrome verstellt wird.
+    /// </summary>
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value) return;
+            _isSelected = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowChrome));
+            OnPropertyChanged(nameof(ChromeBorderThickness));
+            OnPropertyChanged(nameof(ShowCornerHandles));
+            OnPropertyChanged(nameof(ShowWireframe));
+        }
+    }
+
+    /// <summary>
+    /// Alle Edit-Chrome-Elemente (Border, Edge-Handles, Rotate-Handle,
+    /// Origin-Marker, Wireframe) sind genau dann sichtbar, wenn das Feld
+    /// selektiert ist.
+    /// </summary>
+    public bool ShowChrome => _isSelected;
+
+    /// <summary>
+    /// BorderThickness des DragBorders: 0 wenn nicht selektiert (= kein
+    /// sichtbarer Rahmen), sonst der zoom-kompensierte Default. Wir binden
+    /// hier statt auf <see cref="EffectiveBorderThickness"/>, damit unselektierte
+    /// Felder keine Linie zeigen — Hit-Test bleibt über Background=Transparent
+    /// + Padding=8 möglich.
+    /// </summary>
+    public double ChromeBorderThickness =>
+        _isSelected ? EffectiveBorderThickness : 0.0;
+
+    /// <summary>
+    /// Sichtbarkeits-Flag für die 4 Eck-Handles. Sichtbar nur wenn das Feld
+    /// selektiert ist UND nicht gerade der Skew-Modus aktiv ist (Skew wirkt
+    /// nur an Edge-Handles, Eck-Handles würden sonst nur verwirren).
+    /// </summary>
+    public bool ShowCornerHandles => _isSelected && !_isSkewActive;
 
     /// <summary>Größe der 8 Resize-Handles in Bild-Pixel-Coords (= konstant in Screen-Pixeln).</summary>
     public double EffectiveHandleSize => HandleSize / _effectiveScale;
@@ -455,6 +501,7 @@ public class TextFieldViewModel : ViewModelBase
         OnPropertyChanged(nameof(RotationOriginCanvasX));
         OnPropertyChanged(nameof(RotationOriginCanvasY));
         OnPropertyChanged(nameof(RotationOriginRelative));
+        OnPropertyChanged(nameof(ShowWireframe));
         InvalidateWarpPreview();
     }
 
@@ -548,6 +595,13 @@ public class TextFieldViewModel : ViewModelBase
         CornerNEdx != 0 || CornerNEdy != 0 ||
         CornerSEdx != 0 || CornerSEdy != 0 ||
         CornerSWdx != 0 || CornerSWdy != 0;
+
+    /// <summary>
+    /// Wireframe (gestricheltes Quad an den verzerrten Eckpunkten) zeigen wir
+    /// nur, wenn das Feld gerade selektiert ist UND verzerrt ist — sonst
+    /// flutet eine ganze Karte mit Hilfslinien.
+    /// </summary>
+    public bool ShowWireframe => _isSelected && IsWarped;
 
     public string FontFamily
     {
