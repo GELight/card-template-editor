@@ -2,6 +2,7 @@
 bin/
 obj/
 out/
+release/
 
 # IDE / Editor
 .vs/
